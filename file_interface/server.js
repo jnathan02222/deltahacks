@@ -1,6 +1,8 @@
 const express = require('express');
 const next = require('next');
 var { createServer } = require('http');
+const multer = require('multer');
+const upload = multer({ dest: 'notes/' });
 
 const {WebSocketServer} = require('ws');
 
@@ -13,10 +15,15 @@ const server = express();
 
 app.prepare().then(
     ()=>{
+        server.post('/notes', upload.single('note'), (req, res) => {
+            
+            res.redirect('/');
+        });
+
         server.all('*', (req, res) => {
             return handle(req, res);
         });
-
+        
         server.listen(3000, () => {
             console.log(`> Ready on http://localhost:${3000}`);
         });
