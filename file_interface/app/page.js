@@ -1,5 +1,6 @@
 'use client'
 import Image from "next/image";
+import Link from "next/link";
 import {useState, useRef, useEffect} from 'react';
 
 export default function Home() {
@@ -21,7 +22,7 @@ export default function Home() {
             <p className="pl-2">Choose File</p>
           </label>
           <p className="pt-2">{file}</p>
-          <input onChange={()=>{setFile(formRef.current.files[0].name)}} ref={formRef} type="file" id="notes" name="note" className="w-[100px] hidden"/>
+          <input required={true} onChange={()=>{setFile(formRef.current.files[0].name)}} ref={formRef} type="file" id="notes" name="note" className="w-[100px] hidden"/>
         </div>
         <div className="flex justify-center">
 
@@ -30,6 +31,7 @@ export default function Home() {
             
             <p className="pl-2">Upload Notes</p>
           </button>
+          <Link className="p-2 m-2 border-black border-2 rounded-md flex items-center"  href="/game">Play!</Link>
         </div>
       </form>
       
