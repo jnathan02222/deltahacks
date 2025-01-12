@@ -7,12 +7,30 @@ import {FaceDetector, FilesetResolver, Detection} from '@mediapipe/tasks-vision'
 
 export default function Home() {
     const [gameState, setGameState] = useState("pregame");
+    const [answer, setAnswer] = useState("");
+    const [input, setInput] = useState("");
+
+    const recognition = useRef();
+
     const [question, setQuestion] = useState("");
     const ws = useRef();
     const videoElem = useRef();
     const faceDetector  = useRef();
 
     useEffect(()=>{ 
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        recognition.current = new SpeechRecognition();
+        recognition.current.lang = "en-US";
+        recognition.current.continuous = true;
+        recognition.current.interimResults = true;
+
+        recognition.current.onresult = (event) => {
+            let speech = event.results[event.results.length - 1][0].transcript
+            
+            setInput(speech)
+        };
+
                 
         // Initialize the object detector
         const initializefaceDetector = async () => {
@@ -70,6 +88,18 @@ export default function Home() {
     useEffect(()=>{
         if(gameState === "choosing"){
             
+
+        }else if(gameState === "question"){
+            axios.get('/question').then(
+                response => {
+                    setQuestion(response.data["q"])
+                    setAnswer(response.data["a"])
+                    setInput("")
+                    
+
+                }
+            )
+            
         }
     }, [gameState])
 
@@ -83,8 +113,7 @@ export default function Home() {
         if (video.currentTime !== lastVideoTime.current) {
             lastVideoTime.current = video.currentTime;
             const detections = faceDetector.current.detectForVideo(video, startTimeMs).detections;
-            console.log(detections)
-
+            
         }
         // Call this function again to keep predicting when the browser is ready
         window.requestAnimationFrame(predictWebcam);
@@ -102,7 +131,8 @@ export default function Home() {
                     var audio = new Audio('Kahoot Lobby Music (HD).mp3');
                     audio.loop = true;
                     audio.play();
-                    setGameState("choosing")
+                    setGameState("question")
+                    recognition.current.start()
 
                     navigator.mediaDevices.getUserMedia({video: true}).then(
                         (stream) => {
@@ -124,17 +154,16 @@ export default function Home() {
             {gameState === 'question' && <>
                 <h2 className="text-4xl p-10 w-3/4 text-center text-gray-600">{question}</h2>
                 <h2 className="text-4xl p-5 w-3/4 text-center text-gray-400">Say your answer:</h2>
+                <h2 className="text-4xl p-5 w-3/4 text-center text-gray-400">{input}</h2>
             </>}
-            <video ref={videoElem} id="webcam" autoPlay={true} playsInline={true} className="" style={{width: 320, height:240}}></video>
+            <video ref={videoElem} id="webcam" autoPlay={true} playsInline={true} className="hidden" style={{width: 320, height:240}}></video>
 
         </main>
     );
 }
 
 /*
-axios.get('/question').then(
-    response => setQuestion(response.data["q"])
-)
+
 
 Detect faces
 Speech to text
