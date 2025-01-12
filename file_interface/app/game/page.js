@@ -24,9 +24,9 @@ export default function Home() {
         
         
 
-        /*axios.get('/question').then(
+        axios.get('/question').then(
             response => setQuestion(response.data["q"])
-        ) */
+        )
 
         return () => {
           if (ws.current) {
@@ -36,6 +36,12 @@ export default function Home() {
 
 
       }, [])
+
+    useEffect(() => {
+        const utterance = new SpeechSynthesisUtterance(question);
+        utterance.voice = speechSynthesis.getVoices()[0];
+        speechSynthesis.speak(utterance);
+    }, [question])
 
     return (
         <main className="flex flex-col  max-h-screen justify-center	items-center p-24">
