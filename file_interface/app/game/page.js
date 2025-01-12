@@ -8,9 +8,12 @@ import {FaceDetector, FilesetResolver, Detection} from '@mediapipe/tasks-vision'
 export default function Home() {
     const [gameState, setGameState] = useState("pregame");
     const [question, setQuestion] = useState("");
+    const faceCounter = useRef(0);
+    const countedFace = useRef(false);
     const ws = useRef();
     const videoElem = useRef();
     const faceDetector  = useRef();
+    const range = 20;
 
     useEffect(()=>{ 
                 
@@ -28,11 +31,6 @@ export default function Home() {
           });
         };
         initializefaceDetector();
-        
-
-
-
-
 
         //Websocket setup
         ws.current = new WebSocket('ws://localhost:8081/ws');
@@ -47,10 +45,6 @@ export default function Home() {
         ws.current.addEventListener("close", () => {
           console.log("Disconnected from server.");
         });
-        
-        
-
-        
 
         return () => {
           if (ws.current) {
@@ -83,9 +77,18 @@ export default function Home() {
         if (video.currentTime !== lastVideoTime.current) {
             lastVideoTime.current = video.currentTime;
             const detections = faceDetector.current.detectForVideo(video, startTimeMs).detections;
-            console.log(detections)
-
-        }
+            if(detections[0]){
+                let values = detections[0]["boundingBox"]
+                if(values["originX"] + values["width"]/2 > video.videoWidth/2 - range && values["originX"] + values["width"]/2 < video.videoWidth/2 + range && !countedFace.current){
+                    faceCounter.current = faceCounter.current + 1;
+                    countedFace.current = true;
+                } else if(!(values["originX"] + values["width"]/2 > video.videoWidth/2 - range && values["originX"] + values["width"]/2 < video.videoWidth/2 + range) && countedFace.current){
+                    countedFace.current = false;
+                }
+                console.log(faceCounter.current);
+            }
+        }   
+        // {originX: 241, originY: 268, width: 224, height: 224, angle: 0}
         // Call this function again to keep predicting when the browser is ready
         window.requestAnimationFrame(predictWebcam);
     }
