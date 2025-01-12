@@ -16,6 +16,7 @@ export default function Home() {
     const choosingMusic = useRef();
     const questionMusic = useRef();
     const answerData = useRef();
+    const answered = useRef(false);
 
     const [question, setQuestion] = useState("");
     const faceCounter = useRef(0);
@@ -44,14 +45,15 @@ export default function Home() {
             setTimeout(()=>{
                 setInput(
                     prev => {
-                        if(prev === speech && prev !== "" && gameStateRef.current === "question"){
+                        if(prev === speech && prev !== "" && gameStateRef.current === "question" && !answered.current){
+                            answered.current = true
                             axios.post("/answer", answerData.current).then(
                                 response => {
                                     
                                     if(response.data === "No"){
                                         ws.current.send("shoot")
                                         setQuestion("RELOAD!!!")
-                                        setTimeout(() => {setGameState("choosing")}, 3000)
+                                        setTimeout(() => {setGameState("choosing")}, 10000)
                                     }else{
                                         setQuestion("")
                                         setGameState("choosing")
@@ -116,6 +118,7 @@ export default function Home() {
     useEffect(()=>{
         if(gameState === "choosing"){
             ws.current.send("right")
+            
             choosingMusic.current.play();
             questionMusic.current.pause();
             let counter = Math.floor(Math.random()*10)
@@ -123,6 +126,7 @@ export default function Home() {
             faceCounterRandomizer.current = counter
             faceCounter.current = 0
         }else if(gameState === "question"){
+            answered.current = false
             ws.current.send("stop")
             questionMusic.current.play();
             choosingMusic.current.pause();
@@ -211,8 +215,8 @@ export default function Home() {
                 <h2 className="text-4xl p-5 w-3/4 text-center text-gray-400">Say your answer:</h2>
                 <h2 className="text-4xl p-5 w-3/4 text-center text-gray-400">{input}</h2>
             </>}
-            <video ref={videoElem} id="webcam" autoPlay={true} playsInline={true} className="hidden" style={{width: 320, height:240}}></video>
-
+            <video ref={videoElem} id="webcam" autoPlay={true} playsInline={true} className={gameState === "choosing" ? "pt-10 " : "hidden"} style={{width: 320, height:240}}></video>
+                
         </main>
     );
 }
