@@ -18,6 +18,7 @@ const server = express();
 
 app.prepare().then(
     ()=>{
+        server.use(express.json())
         server.post('/notes', upload.single('note'), (req, res) => {
             //Process file and turn into JSON using Cohere API           
             let dataBuffer = fs.readFileSync(req.file["path"]);
@@ -53,6 +54,23 @@ app.prepare().then(
             const keys = Object.keys(questions);
             const randomKey = keys[Math.floor(Math.random() * keys.length)];
             res.json({q: randomKey, a :questions[randomKey]})
+        });
+
+        server.post('/answer', (req, res) =>{
+            console.log(req.body)
+            console.log(JSON.stringify(req.body))
+            const client = new CohereClient({ token: "EngU1XLXyXtDTRCYWHvpWuDJzHUyQxorejs1UgSa" });        
+            client.chat(
+                {
+                    message: JSON.stringify(req.body),
+                    model: "command-r-08-2024",
+                    preamble: "Consider the following JSON in question, answer, input format. Say 'yes' if the input is a suitable answer to the question based on the correct answer given. Say 'no' otherwise." 
+                }
+            ).then(
+                (response)=>{
+                    res.send(response.text);
+                }
+            )
         });
 
         server.all('*', (req, res) => {

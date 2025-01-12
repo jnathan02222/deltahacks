@@ -9,8 +9,12 @@ export default function Home() {
     const [gameState, setGameState] = useState("pregame");
     const [answer, setAnswer] = useState("");
     const [input, setInput] = useState("");
+    const faceCounterRandomizer = useRef(1);
 
     const recognition = useRef();
+    const choosingMusic = useRef();
+    const questionMusic = useRef();
+    const answerData = useRef();
 
     const [question, setQuestion] = useState("");
     const faceCounter = useRef(0);
@@ -19,6 +23,10 @@ export default function Home() {
     const videoElem = useRef();
     const faceDetector  = useRef();
     const range = 20;
+    
+    useEffect(()=>{
+            answerData.current = {question : question, answer : answer, input : input}
+    }, [question, answer, input])
 
     useEffect(()=>{ 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -30,7 +38,15 @@ export default function Home() {
 
         recognition.current.onresult = (event) => {
             let speech = event.results[event.results.length - 1][0].transcript
-            
+            if(event.results[event.results.length - 1].isFinal){
+                axios.post("/answer", answerData.current).then(
+                    response => {
+                        setGameState("choosing")
+                        setQuestion("")
+                        console.log(response.data)
+                    }
+                )
+            }   
             setInput(speech)
         };
 
@@ -73,6 +89,8 @@ export default function Home() {
 
       }, [])
 
+   
+
     useEffect(() => {
         const utterance = new SpeechSynthesisUtterance(question);
         utterance.voice = speechSynthesis.getVoices()[0];
@@ -81,16 +99,21 @@ export default function Home() {
 
     useEffect(()=>{
         if(gameState === "choosing"){
-            
-
+            choosingMusic.current.play();
+            questionMusic.current.pause();
+            let counter = Math.floor(Math.random()*10)
+            console.log(counter)
+            faceCounterRandomizer.current = counter
+            faceCounter.current = 0
         }else if(gameState === "question"){
+            questionMusic.current.play();
+            choosingMusic.current.pause();
             axios.get('/question').then(
                 response => {
                     setQuestion(response.data["q"])
                     setAnswer(response.data["a"])
                     setInput("")
                     
-
                 }
             )
             
@@ -115,7 +138,10 @@ export default function Home() {
                 } else if(!(values["originX"] + values["width"]/2 > video.videoWidth/2 - range && values["originX"] + values["width"]/2 < video.videoWidth/2 + range) && countedFace.current){
                     countedFace.current = false;
                 }
-                console.log(faceCounter.current);
+            }
+            console.log(faceCounter.current)
+            if(faceCounter.current === faceCounterRandomizer.current){
+                setGameState("question")
             }
         }   
         // {originX: 241, originY: 268, width: 224, height: 224, angle: 0}
@@ -132,9 +158,14 @@ export default function Home() {
             </div>
             {gameState === 'pregame' && <div className="absolute flex justify-center items-center w-full    h-screen">
                 <button  onClick={()=>{
-                    var audio = new Audio('Kahoot Lobby Music (HD).mp3');
-                    audio.loop = true;
-                    audio.play();
+                    choosingMusic.current = new Audio('Kahoot Lobby Music (HD).mp3');
+                    questionMusic.current = new Audio('Pink Soldiers.mp3');
+                    choosingMusic.current.loop = true;
+                    questionMusic.current.loop = true;
+
+                    choosingMusic.current.play();
+                    
+
                     setGameState("choosing")
                     recognition.current.start()
 
