@@ -47,6 +47,11 @@ app.prepare().then(
             });
         });
 
+        server.get('/files', (req, res) => {
+            var files = fs.readdirSync(`data/`)
+            res.json(files)
+        })
+
         server.get('/question', (req, res) => {
             var files = fs.readdirSync(`data/`)
             const randomIndex = Math.floor(Math.random() * files.length);

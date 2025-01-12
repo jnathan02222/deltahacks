@@ -52,6 +52,9 @@ export default function Home() {
                                         ws.current.send("shoot")
                                         setQuestion("RELOAD!!!")
                                         setTimeout(() => {setGameState("choosing")}, 3000)
+                                    }else{
+                                        setQuestion("")
+                                        setGameState("choosing")
                                     }
                                 }
                             )
