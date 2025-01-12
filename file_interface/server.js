@@ -6,6 +6,8 @@ const upload = multer({ dest: 'notes/' });
 const fs = require('fs');
 const pdf = require('pdf-parse');
 var { CohereClient } = require("cohere-ai");
+const math = require('mathjs');
+
 
 const {WebSocketServer} = require('ws');
 
@@ -57,20 +59,29 @@ app.prepare().then(
         });
 
         server.post('/answer', (req, res) =>{
-            console.log(req.body)
-            console.log(JSON.stringify(req.body))
+            //console.log(req.body)
+            //console.log(JSON.stringify(req.body))
+
             const client = new CohereClient({ token: "EngU1XLXyXtDTRCYWHvpWuDJzHUyQxorejs1UgSa" });        
-            client.chat(
-                {
-                    message: JSON.stringify(req.body),
-                    model: "command-r-08-2024",
-                    preamble: "Consider the following JSON in question, answer, input format. Say 'yes' if the input is a suitable answer to the question based on the correct answer given. Say 'no' otherwise." 
+
+
+            (async () => {
+                const response = await client.embed({
+                    model: "embed-english-v3.0",
+                    texts: [req.body.input, req.body.answer],
+                    inputType: "classification",
+                    truncate: "NONE"
+                });
+                let [answer, user_response] = response.embeddings;
+                let similarity = math.dot(answer, user_response) / (math.norm(answer) * math.norm(user_response))
+                console.log(similarity)
+                if(similarity > 0.75){
+                    res.send("Yes");
+                }else{
+                    res.send("No");
                 }
-            ).then(
-                (response)=>{
-                    res.send(response.text);
-                }
-            )
+                
+            })();
         });
 
         server.all('*', (req, res) => {
@@ -84,15 +95,22 @@ app.prepare().then(
 )
 
 
+
 const wsServer = createServer();
 const wss = new WebSocketServer({ server: wsServer });
+
+function broadcast(message) {
+    wss.clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+        client.send(message);
+        }
+    });
+}
 wss.on('connection', function connection(ws) {
     ws.on('error', console.error);
     ws.on('message', function message(data) {
         console.log(data.toString())
-        
-
-        ws.send("right")
+        broadcast(data.toString())
     });
 });
 wsServer.listen(8081, () => {

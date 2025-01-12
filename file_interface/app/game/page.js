@@ -10,6 +10,7 @@ export default function Home() {
     const [answer, setAnswer] = useState("");
     const [input, setInput] = useState("");
     const faceCounterRandomizer = useRef(1);
+    const gameStateRef = useRef();
 
     const recognition = useRef();
     const choosingMusic = useRef();
@@ -23,10 +24,12 @@ export default function Home() {
     const videoElem = useRef();
     const faceDetector  = useRef();
     const range = 20;
-    
+
     useEffect(()=>{
             answerData.current = {question : question, answer : answer, input : input}
     }, [question, answer, input])
+
+        
 
     useEffect(()=>{ 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -38,15 +41,25 @@ export default function Home() {
 
         recognition.current.onresult = (event) => {
             let speech = event.results[event.results.length - 1][0].transcript
-            if(event.results[event.results.length - 1].isFinal){
-                axios.post("/answer", answerData.current).then(
-                    response => {
-                        setGameState("choosing")
-                        setQuestion("")
-                        console.log(response.data)
+            setTimeout(()=>{
+                setInput(
+                    prev => {
+                        if(prev === speech && prev !== "" && gameStateRef.current === "question"){
+                            axios.post("/answer", answerData.current).then(
+                                response => {
+                                    
+                                    if(response.data === "No"){
+                                        ws.current.send("shoot")
+                                        setQuestion("RELOAD!!!")
+                                        setTimeout(() => {setGameState("choosing")}, 3000)
+                                    }
+                                }
+                            )
+                        }
+                        return prev
                     }
                 )
-            }   
+            }, 3000)
             setInput(speech)
         };
 
@@ -99,6 +112,7 @@ export default function Home() {
 
     useEffect(()=>{
         if(gameState === "choosing"){
+            ws.current.send("right")
             choosingMusic.current.play();
             questionMusic.current.pause();
             let counter = Math.floor(Math.random()*10)
@@ -106,6 +120,7 @@ export default function Home() {
             faceCounterRandomizer.current = counter
             faceCounter.current = 0
         }else if(gameState === "question"){
+            ws.current.send("stop")
             questionMusic.current.play();
             choosingMusic.current.pause();
             axios.get('/question').then(
@@ -118,6 +133,7 @@ export default function Home() {
             )
             
         }
+        gameStateRef.current = gameState
     }, [gameState])
 
     let lastVideoTime = useRef(-1);
@@ -141,6 +157,7 @@ export default function Home() {
             }
             console.log(faceCounter.current)
             if(faceCounter.current === faceCounterRandomizer.current){
+                
                 setGameState("question")
             }
         }   
@@ -162,7 +179,7 @@ export default function Home() {
                     questionMusic.current = new Audio('Pink Soldiers.mp3');
                     choosingMusic.current.loop = true;
                     questionMusic.current.loop = true;
-
+                    
                     choosingMusic.current.play();
                     
 
