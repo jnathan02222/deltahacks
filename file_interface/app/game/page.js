@@ -43,6 +43,35 @@ export default function Home() {
         speechSynthesis.speak(utterance);
     }, [question])
 
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            console.error("SpeechRecognition is not supported in this browser.");
+            return;
+        }
+        
+        const recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            console.log('Transcript:', transcript);
+        };
+
+        recognition.onend = () => {
+            console.log("Speech recognition ended");
+        };
+
+        setTimeout(() => {    
+            recognition.start();
+            console.log("Speech recognition started");
+        }, 10000);
+
+        console.log(question)
+    }, [question])
+
     return (
         <main className="flex flex-col  max-h-screen justify-center	items-center p-24">
             <div className="flex items-center">
