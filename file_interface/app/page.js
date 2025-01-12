@@ -9,11 +9,11 @@ export default function Home() {
   
 
   return (
-    <main className="flex flex-col  max-h-screen justify-center	items-center p-24">
+    <main className="flex flex-col  max-h-screen items-center pt-10">
       <div className="flex items-center">
-        <h1 className='select-none	text-7xl text-black font-bold pl-5'>Brain</h1>
+        <h1 className='select-none	text-7xl text-black font-bold pl-5'>Bullet</h1>
         <Image src="/brain.png" width={150} height={150} alt="is brain"></Image>
-        <h1 className='select-none	text-7xl text-black font-bold'>Bullet</h1>
+        <h1 className='select-none	text-7xl text-black font-bold'>Brain</h1>
       </div>
       <form className="flex flex-col" action="/notes" method="POST" encType="multipart/form-data">
         <div className="flex flex-col justify-center items-center border-2 border-grey-500 border-dashed	 w-128 rounded-md	w-96 mt-8 h-96 bg-gray-100">

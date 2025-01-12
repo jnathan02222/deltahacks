@@ -7,6 +7,11 @@ import {FaceDetector, FilesetResolver, Detection} from '@mediapipe/tasks-vision'
 
 export default function Home() {
     const [gameState, setGameState] = useState("pregame");
+    const [answer, setAnswer] = useState("");
+    const [input, setInput] = useState("");
+
+    const recognition = useRef();
+
     const [question, setQuestion] = useState("");
     const faceCounter = useRef(0);
     const countedFace = useRef(false);
@@ -16,6 +21,19 @@ export default function Home() {
     const range = 20;
 
     useEffect(()=>{ 
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        recognition.current = new SpeechRecognition();
+        recognition.current.lang = "en-US";
+        recognition.current.continuous = true;
+        recognition.current.interimResults = true;
+
+        recognition.current.onresult = (event) => {
+            let speech = event.results[event.results.length - 1][0].transcript
+            
+            setInput(speech)
+        };
+
                 
         // Initialize the object detector
         const initializefaceDetector = async () => {
@@ -64,6 +82,18 @@ export default function Home() {
     useEffect(()=>{
         if(gameState === "choosing"){
             
+
+        }else if(gameState === "question"){
+            axios.get('/question').then(
+                response => {
+                    setQuestion(response.data["q"])
+                    setAnswer(response.data["a"])
+                    setInput("")
+                    
+
+                }
+            )
+            
         }
     }, [gameState])
 
@@ -94,18 +124,19 @@ export default function Home() {
     }
 
     return (
-        <main className="flex flex-col  max-h-screen justify-center	items-center p-24">
-            <div className="flex items-center">
-                <h1 className='select-none	text-7xl text-black font-bold pl-5'>Brain</h1>
+        <main className="flex flex-col  max-h-screen items-center">
+            <div className="flex items-center pt-10">
+                <h1 className='select-none	text-7xl text-black font-bold pl-5'>Bullet</h1>
                 <Image src="/brain.png" width={150} height={150} alt="is brain"></Image>
-                <h1 className='select-none	text-7xl text-black font-bold'>Bullet</h1>
+                <h1 className='select-none	text-7xl text-black font-bold'>Brain</h1>
             </div>
-            {gameState === 'pregame' && <div>
-                <button onClick={()=>{
+            {gameState === 'pregame' && <div className="absolute flex justify-center items-center w-full    h-screen">
+                <button  onClick={()=>{
                     var audio = new Audio('Kahoot Lobby Music (HD).mp3');
                     audio.loop = true;
                     audio.play();
                     setGameState("choosing")
+                    recognition.current.start()
 
                     navigator.mediaDevices.getUserMedia({video: true}).then(
                         (stream) => {
@@ -127,17 +158,16 @@ export default function Home() {
             {gameState === 'question' && <>
                 <h2 className="text-4xl p-10 w-3/4 text-center text-gray-600">{question}</h2>
                 <h2 className="text-4xl p-5 w-3/4 text-center text-gray-400">Say your answer:</h2>
+                <h2 className="text-4xl p-5 w-3/4 text-center text-gray-400">{input}</h2>
             </>}
-            <video ref={videoElem} id="webcam" autoPlay={true} playsInline={true} className="" style={{width: 320, height:240}}></video>
+            <video ref={videoElem} id="webcam" autoPlay={true} playsInline={true} className="hidden" style={{width: 320, height:240}}></video>
 
         </main>
     );
 }
 
 /*
-axios.get('/question').then(
-    response => setQuestion(response.data["q"])
-)
+
 
 Detect faces
 Speech to text
