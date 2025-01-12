@@ -120,18 +120,18 @@ export default function Home() {
     }
 
     return (
-        <main className="flex flex-col  max-h-screen justify-center	items-center p-24">
-            <div className="flex items-center">
-                <h1 className='select-none	text-7xl text-black font-bold pl-5'>Brain</h1>
+        <main className="flex flex-col  max-h-screen items-center">
+            <div className="flex items-center pt-10">
+                <h1 className='select-none	text-7xl text-black font-bold pl-5'>Bullet</h1>
                 <Image src="/brain.png" width={150} height={150} alt="is brain"></Image>
-                <h1 className='select-none	text-7xl text-black font-bold'>Bullet</h1>
+                <h1 className='select-none	text-7xl text-black font-bold'>Brain</h1>
             </div>
-            {gameState === 'pregame' && <div>
-                <button onClick={()=>{
+            {gameState === 'pregame' && <div className="absolute flex justify-center items-center w-full    h-screen">
+                <button  onClick={()=>{
                     var audio = new Audio('Kahoot Lobby Music (HD).mp3');
                     audio.loop = true;
                     audio.play();
-                    setGameState("question")
+                    setGameState("choosing")
                     recognition.current.start()
 
                     navigator.mediaDevices.getUserMedia({video: true}).then(
